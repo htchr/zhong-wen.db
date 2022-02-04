@@ -1,0 +1,6 @@
+.DS_Store
+/csvs
+/venv
+/working
+zhong-wen.db
+*.swp
