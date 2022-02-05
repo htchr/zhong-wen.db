@@ -14,20 +14,27 @@ def reload_vocab():
     csvs = "/Users/jack/Documents/projects/22-chinese/csvs/"
     con = sqlite3.connect("zhong-wen.db")
     cur = con.cursor()
+    zi_set = set()
     for c in os.listdir(csvs):
         if c.split('.')[-1] == 'csv':
             path = csvs + c
             filename = c.split('.')[0]
+            # extracrt non-duplicates from csv file
+            vocab = []
+            with open(path, newline='') as csvfile:
+                c_row = csv.reader(csvfile, delimiter=';')
+                for c in c_row:
+                    if c[0] not in zi_set:
+                        zi_set.add(c[0])
+                        vocab.append(c)
             # remove old versions to refresh
             with con:
                 cur.execute("DELETE FROM Vocab WHERE Pack = ?", (filename,))
             # load values from csvs to table
             with con:
-                with open(path, newline='') as csvfile:
-                    vocab = csv.reader(csvfile, delimiter=';')
-                    for row in vocab:
-                        cur.execute("INSERT INTO Vocab VALUES (NULL,?,?,?,?,?)",
-                                    (filename, row[0], row[1], row[2], ''))
+                for row in vocab:
+                    cur.execute("INSERT INTO Vocab VALUES (NULL,?,?,?,?,?)",
+                                (filename, row[0], row[1], row[2], ''))
     con.close()
 
 def search_zi():
