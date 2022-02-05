@@ -33,15 +33,33 @@ def reload_vocab():
 def search_zi():
     """
     search through the sqlite db for words including a chinese character
-
+    ---
     returns: list of words including zi
     """
+    user_zi = input("enter the chinese character you would like to search for, leave blank to quit: ")
+    if user_zi == '':
+        return
+    con = sqlite3.connect("zhong-wen.db")
+    cur = con.cursor()
+    with con:
+        cur.execute("""SELECT * FROM Vocab WHERE 
+                        Zi LIKE (? || '%') 
+                        OR Zi LIKE ('%' || ? || '%') 
+                        OR Zi LIKE ('%' || ?)""", 
+                    (user_zi,user_zi, user_zi))
+    words = cur.fetchall()
+    if len(words) == 0:
+        print("no words found containing " + user_zi)
+    for w in words:
+        print(w)
+    return words
+    con.close()
 
 def tone_perms(pinyin):
     """
     support function
     generate list of tone permutations for a given pinyin
-    
+    ---
     pinyin: string to generate from
     returns: list of permutations of all tone combinations
     """
@@ -50,14 +68,14 @@ def search_pinyin():
     """
     search through sqlite db for words including pinyin
     abstract the search to look for all permutations of tones
-
+    ---
     returns: list of words including pinyin
     """
 
 def search_trans():
     """
     search translations for occurances of given english word
-
+    ---
     returns: list of words including trans
     """
 
@@ -72,7 +90,7 @@ def review_vocab():
     randomly select n number of words to review
     randomly presents zi / pinyin / translations for review
     user inupts 0 / 1 to progress + keep track of progress
-
+    ---
     returns: ratio of correct:incorrect
     """
 
