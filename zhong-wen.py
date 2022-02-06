@@ -55,12 +55,13 @@ def search_zi():
                         OR Zi LIKE ('%' || ?)""", 
                     (user_zi,user_zi, user_zi))
     words = cur.fetchall()
+    con.close()
     if len(words) == 0:
         print("no words found containing " + user_zi)
     for w in words:
         print(w)
+        return
     return words
-    con.close()
 
 def tone_perms(pinyin):
     """
@@ -70,6 +71,25 @@ def tone_perms(pinyin):
     pinyin: string to generate from
     returns: list of permutations of all tone combinations
     """
+    tones = {'a': ('ā', 'á', 'â', 'à'),
+             'e': ('ē', 'é', 'ê', 'è'), 
+             'i': ('ī', 'í', 'î', 'ì'), 
+             'o': ('ō', 'ó', 'ô', 'ò'), 
+             'u': ('ū', 'ú', 'û', 'ù')}
+    pinyin = pinyin.strip()
+    perms = []
+    perms.append(pinyin)
+    pinyin = list(pinyin)
+    for i, char in enumerate(pinyin):
+        if char in list(tones.keys()):
+            for t in tones[char]:
+                pinyin[i] = t
+                p = ''
+                for c in pinyin:
+                    p = p + c
+                perms.append(p)
+        pinyin = list(perms[0])
+    return perms
 
 def search_pinyin():
     """
@@ -78,6 +98,30 @@ def search_pinyin():
     ---
     returns: list of words including pinyin
     """
+    user_pinyin = input("enter the pinyin you would like to search for, leave blank to quit: ")
+    if user_pinyin == '':
+        return
+    pinyin_perms = tone_perms(user_pinyin)
+    words = []
+    con = sqlite3.connect("zhong-wen.db")
+    cur = con.cursor()
+    for p in pinyin_perms:
+        with con:
+            cur.execute("""SELECT * FROM Vocab WHERE
+                           PinYin LIKE (? || '%')
+                           OR PinYin LIKE ('%' || ? || '%')
+                           OR PinYin LIKE ('%' || ?)""",
+                           (p, p, p))
+        rows = cur.fetchall()
+        for r in rows:
+            words.append(r)
+    con.close()
+    if len(words) == 0:
+        print("no words found using " + "'" + user_pinyin + "'")
+        return
+    for w in words:
+        print(w)
+    return words
 
 def search_trans():
     """
