@@ -37,13 +37,15 @@ def reload_vocab():
                                 (filename, row[0], row[1], row[2], ''))
     con.close()
 
-def search_zi():
+def search_zi(user_zi=''):
     """
     search through the sqlite db for words including a chinese character
     ---
-    returns: list of words including zi
+    user_zi: string of chinese character(s) to search for
+    returns: list of words including zi / None
     """
-    user_zi = input("enter the chinese character you would like to search for, leave blank to quit: ")
+    if user_zi == '':
+        user_zi = input("enter the chinese character you would like to search for, leave blank to quit: ")
     if user_zi == '':
         return
     con = sqlite3.connect("zhong-wen.db")
@@ -57,9 +59,6 @@ def search_zi():
     words = cur.fetchall()
     con.close()
     if len(words) == 0:
-        print("no words found containing " + user_zi)
-    for w in words:
-        print(w)
         return
     return words
 
@@ -91,14 +90,15 @@ def tone_perms(pinyin):
         pinyin = list(perms[0])
     return perms
 
-def search_pinyin():
+def search_pinyin(user_pinyin=''):
     """
     search through sqlite db for words including pinyin
     abstract the search to look for all permutations of tones
     ---
     returns: list of words including pinyin
     """
-    user_pinyin = input("enter the pinyin you would like to search for, leave blank to quit: ")
+    if user_pinyin == '':
+        user_pinyin = input("enter the pinyin you would like to search for, leave blank to quit: ")
     if user_pinyin == '':
         return
     pinyin_perms = tone_perms(user_pinyin)
@@ -117,10 +117,7 @@ def search_pinyin():
             words.append(r)
     con.close()
     if len(words) == 0:
-        print("no words found using " + "'" + user_pinyin + "'")
         return
-    for w in words:
-        print(w)
     return words
 
 def search_trans():
@@ -151,11 +148,12 @@ def write_ju_zi():
     records sentences to sqlite db to review with tutor
     """
 
-def write_sqlite():
+def write_sqlite(command=''):
     """
     directly write to the db
     """
-    command = input("enter SQLite command, leave blank to quit: ")
+    if command == '':
+        command = input("enter SQLite command, leave blank to quit: ")
     if command == '':
         return
     con = sqlite3.connect('zhong-wen.db')
@@ -164,26 +162,29 @@ def write_sqlite():
         with con:
             cur.execute(command)
     except Exception as e:
-        print("could not execute command")
-        print(e)
+        con.close()
+        return "could not execute command" + str(e)
     con.close()
 
-# ui function menu
-functions = [reload_vocab,
-             search_zi, 
-             search_pinyin, 
-             search_trans,
-             review_vocab,
-             write_ju_zi,
-             write_sqlite]
+def main():
+    """command line ui"""
+    functions = [reload_vocab,
+                 search_zi, 
+                 search_pinyin, 
+                 search_trans,
+                 review_vocab,
+                 write_ju_zi,
+                 write_sqlite]
 
-for i, f in enumerate(functions):
-    print(str(i) + ": " + f.__name__)
-sel = input("select function number, leave blank to quit: ")
-if sel == '':
-    play = False
-elif int(sel) > len(functions) - 1:
-    print("please enter a number in range")
-else:
-    functions[int(sel)]()
+    for i, f in enumerate(functions):
+        print(str(i) + ": " + f.__name__)
+    sel = input("select function number, leave blank to quit: ")
+    if sel == '':
+        return
+    elif int(sel) > len(functions) - 1:
+        print("please enter a number in range")
+    else:
+        print(functions[int(sel)]())
 
+if __name__ == '__main__':
+    main()
