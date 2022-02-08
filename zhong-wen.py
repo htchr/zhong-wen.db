@@ -5,36 +5,40 @@ import os
 import csv
 import random
 
-def reload_vocab():
+def load_vocab(path=''):
     """
-    load vocab words from a csv file to sqlite
+    load vocab words from a user selected csv file to sqlite
     stores all vocab in the same table
     populates table from csv
+    ---
+    path: string to the location of the new vocab list
     """
     csvs = "/Users/jack/Documents/projects/22-chinese/csvs/"
+    if path == '':
+        lists = []
+        for c in os.listdir(csvs):
+            if c.split('.')[-1] == 'csv':
+                lists.append(c)
+        for i, l in enumerate(lists):
+            print(str(i) + ": " + l)
+        new_list_i = input("enter the index of the new list, leave blank to quit: ")
+        if new_list_i == '':
+            return
+        path = csvs + lists[int(new_list_i)]
+    filename = path.split('/')[-1].split('.')[0] #isolate filename without '.csv'
     con = sqlite3.connect("zhong-wen.db")
     cur = con.cursor()
-    zi_set = set()
-    for c in os.listdir(csvs):
-        if c.split('.')[-1] == 'csv':
-            path = csvs + c
-            filename = c.split('.')[0]
-            # extracrt non-duplicates from csv file
-            vocab = []
-            with open(path, newline='') as csvfile:
-                c_row = csv.reader(csvfile, delimiter=';')
-                for c in c_row:
-                    if c[0] not in zi_set:
-                        zi_set.add(c[0])
-                        vocab.append(c)
-            # remove old versions to refresh
-            with con:
-                cur.execute("DELETE FROM Vocab WHERE Pack = ?", (filename,))
-            # load values from csvs to table
-            with con:
-                for row in vocab:
-                    cur.execute("INSERT INTO Vocab VALUES (NULL,?,?,?,?,?)",
-                                (filename, row[0], row[1], row[2], ''))
+    vocab = []
+    with open(path, newline='') as csvfile:
+        c_row = csv.reader(csvfile, delimiter=';')
+        for r in c_row:
+            cur.execute("SELECT * FROM Vocab WHERE Zi = ?", (r[0],))
+            if len(cur.fetchall()) == 0:
+                vocab.append(r)
+    with con:
+        for word in vocab:
+            cur.execute("INSERT INTO Vocab VALUES (NULL,?,?,?,?,?)",
+                        (filename, word[0], word[1], word[2], ''))
     con.close()
 
 def search_zi(user_zi=''):
@@ -187,7 +191,7 @@ def write_sqlite(command=''):
 
 def main():
     """command line ui"""
-    functions = [reload_vocab,
+    functions = [load_vocab,
                  search_zi, 
                  search_pinyin, 
                  search_trans,
