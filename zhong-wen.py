@@ -52,9 +52,9 @@ def search_zi(user_zi=''):
     cur = con.cursor()
     with con:
         cur.execute("""SELECT * FROM Vocab WHERE 
-                        Zi LIKE (? || '%') 
-                        OR Zi LIKE ('%' || ? || '%') 
-                        OR Zi LIKE ('%' || ?)""", 
+                       Zi LIKE (? || '%') 
+                       OR Zi LIKE ('%' || ? || '%') 
+                       OR Zi LIKE ('%' || ?)""", 
                     (user_zi,user_zi, user_zi))
     words = cur.fetchall()
     con.close()
@@ -95,7 +95,8 @@ def search_pinyin(user_pinyin=''):
     search through sqlite db for words including pinyin
     abstract the search to look for all permutations of tones
     ---
-    returns: list of words including pinyin
+    user_pinyin: string of english characters (without tones) to look for
+    returns: list of words including pinyin / None
     """
     if user_pinyin == '':
         user_pinyin = input("enter the pinyin you would like to search for, leave blank to quit: ")
@@ -111,7 +112,7 @@ def search_pinyin(user_pinyin=''):
                            PinYin LIKE (? || '%')
                            OR PinYin LIKE ('%' || ? || '%')
                            OR PinYin LIKE ('%' || ?)""",
-                           (p, p, p))
+                        (p, p, p))
         rows = cur.fetchall()
         for r in rows:
             words.append(r)
@@ -120,12 +121,31 @@ def search_pinyin(user_pinyin=''):
         return
     return words
 
-def search_trans():
+def search_trans(user_eng=''):
     """
     search translations for occurances of given english word
     ---
-    returns: list of words including trans
+    eng: string of english text to search for in the translations of chinese words
+    returns: list of words including trans / None
     """
+    if user_eng == '':
+        user_eng = input("enter the english text you would like to search for, leave blank to quit: ")
+    if user_eng == '':
+        return
+    user_eng = user_eng.strip()
+    con = sqlite3.connect("zhong-wen.db")
+    cur = con.cursor()
+    with con:
+        cur.execute("""SELECT * FROM Vocab WHERE
+                       Trans LIKE (? || '%')
+                       OR Trans LIKE ('%' || ? || '%')
+                       OR Trans LIKE ('%' || ?)""",
+                    (user_eng, user_eng, user_eng))
+    words = cur.fetchall()
+    con.close()
+    if len(words) == 0:
+        return
+    return words
 
 def edit_vocab():
     """
@@ -133,12 +153,13 @@ def edit_vocab():
     edit a row of the Vocab table
     """
 
-def review_vocab():
+def review_vocab(n=0):
     """
     randomly select n number of words to review
     randomly presents zi / pinyin / translations for review
     user inupts 0 / 1 to progress + keep track of progress
     ---
+    n: int of how many words to review
     returns: ratio of correct:incorrect
     """
 
@@ -149,9 +170,7 @@ def write_ju_zi():
     """
 
 def write_sqlite(command=''):
-    """
-    directly write to the db
-    """
+    """directly write to the db"""
     if command == '':
         command = input("enter SQLite command, leave blank to quit: ")
     if command == '':
