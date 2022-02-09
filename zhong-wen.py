@@ -32,6 +32,7 @@ def load_vocab(path=''):
     with open(path, newline='') as csvfile:
         c_row = csv.reader(csvfile, delimiter=';')
         for r in c_row:
+            # confirm the word is not a duplicate inside the db
             cur.execute("SELECT * FROM Vocab WHERE Zi = ?", (r[0],))
             if len(cur.fetchall()) == 0:
                 vocab.append(r)
@@ -70,6 +71,7 @@ def tone_perms(pinyin):
     """
     support function
     generate list of tone permutations for a given pinyin
+    assumes only one tone is present in the string
     ---
     pinyin: string to generate from
     returns: list of permutations of all tone combinations
@@ -166,6 +168,24 @@ def review_vocab(n=0):
     n: int of how many words to review
     returns: ratio of correct:incorrect
     """
+    if n == 0:
+        try:
+            n = int(input("enter the number of vocab you want to review, leave blank to quit: "))
+        except:
+            return
+    correct = 0
+    con = sqlite3.connect("zhong-wen.db")
+    cur = con.cursor()
+    with con:
+        cur.execute("SELECT * FROM Vocab ORDER BY random() LIMIT ?", (n,))
+    words = cur.fetchall()
+    con.close()
+    for w in words:
+        i = random.randrange(2, 5)
+        input(w[i])
+        print(w)
+        correct += int(input("did you know this word? 0/1: "))
+    return correct / n
 
 def write_ju_zi():
     """
