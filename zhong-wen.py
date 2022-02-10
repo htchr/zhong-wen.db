@@ -19,12 +19,12 @@ def load_vocab(path=''):
         for c in os.listdir(csvs):
             if c.split('.')[-1] == 'csv':
                 lists.append(c)
-        for i, l in enumerate(lists):
+        for i, l in enumerate(lists, 1):
             print(str(i) + ": " + l)
-        new_list_i = input("enter the index of the new list, leave blank to quit: ")
-        if new_list_i == '':
+        new_list_i = ask_for_int("enter the index of the new list, enter '0' to quit: ")
+        if new_list_i == 0:
             return
-        path = csvs + lists[int(new_list_i)]
+        path = csvs + lists[new_list_i - 1]
     filename = path.split('/')[-1].split('.')[0] #isolate filename without '.csv'
     con = sqlite3.connect("zhong-wen.db")
     cur = con.cursor()
@@ -69,7 +69,7 @@ def search_zi(user_zi=''):
 
 def tone_perms(pinyin):
     """
-    support function
+    support function to search through pinyin easier
     generate list of tone permutations for a given pinyin
     assumes only one tone is present in the string
     ---
@@ -153,11 +153,78 @@ def search_trans(user_eng=''):
         return
     return words
 
-def edit_vocab():
+def ask_for_int(message):
     """
-    support function
+    support function to ask users for an integer
+    to use in place of regular input() method
+    ---
+    message: string asking the user for an integer
+    returns i: user input integer
+    """
+    while True:
+        i = input(message)
+        try:
+            i = int(i)
+            return i
+        except:
+            print("please enter an integer")
+
+def edit_vocab(i=0, zi='', pinyin='', trans='', gram=''):
+    """
     edit a row of the Vocab table
+    ---
+    i: integer of the primary key of the row to edit
+    zi: string of the new chinese character to use
+    pinyin: string of new pinyin
+    trans: string of new translation
+    gram: string of new grammar notes
+    returns: tuple of the editted row
     """
+    if i == 0:
+        i = ask_for_int("enter the index of the row to edit, enter '0' to quit: ")
+    if i == 0:
+        return
+    con = sqlite3.connect("zhong-wen.db")
+    cur = con.cursor()
+    with con:
+        cur.execute("SELECT * FROM Vocab WHERE ID = ?", (i,))
+    row = cur.fetchone()
+    # map of col name to old and new values
+    properties = {'zi': [zi, row[2]], 
+                  'pinyin': [pinyin, row[3]],
+                  'trans': [trans, row[4]],
+                  'gram': [gram, row[5]]}
+    if __name__ == '__main__':
+        # if in command line ui: ask for new values
+        print(row)
+        for key in properties:
+            print(key + ": " + properties[key][1])
+            new = input("change " + key + ", leave blank to keep current value: ")
+            if new == '':
+                continue
+            else:
+                properties[key][0] = new
+    # if new value == '', use old value, else new value
+    update = []
+    for key in properties:
+        if properties[key][0] != '':
+            update.append(properties[key][0])
+        else:
+            update.append(properties[key][1])
+    with con:
+        cur.execute("""UPDATE Vocab 
+                       SET Zi = ?,
+                           PinYin = ?,
+                           Trans = ?,
+                           Grammar = ?
+                       WHERE ID = ?""",
+                    (update[0], update[1], update[2], update[3], i))
+    # select same row to return confirmed change
+    with con:
+        cur.execute("SELECT * FROM Vocab Where ID = ?", (i, ))
+    row = cur.fetchone()
+    con.close()
+    return row
 
 def review_vocab(n=0):
     """
@@ -169,10 +236,9 @@ def review_vocab(n=0):
     returns: ratio of correct:incorrect
     """
     if n == 0:
-        try:
-            n = int(input("enter the number of vocab you want to review, leave blank to quit: "))
-        except:
-            return
+        n = ask_for_int("enter the number of vocab you want to review, enter '0' to quit: ")
+    if n == 0:
+        return
     correct = 0
     con = sqlite3.connect("zhong-wen.db")
     cur = con.cursor()
@@ -184,7 +250,7 @@ def review_vocab(n=0):
         i = random.randrange(2, 5)
         input(w[i])
         print(w)
-        correct += int(input("did you know this word? 0/1: "))
+        correct += ask_for_int("did you know this word? 0/1: ")
     return correct / n
 
 def write_ju_zi():
@@ -194,7 +260,7 @@ def write_ju_zi():
     """
 
 def write_sqlite(command=''):
-    """directly write to the db"""
+    "directly write to the db"
     if command == '':
         command = input("enter SQLite command, leave blank to quit: ")
     if command == '':
@@ -210,24 +276,26 @@ def write_sqlite(command=''):
     con.close()
 
 def main():
-    """command line ui"""
+    "command line ui"
     functions = [load_vocab,
                  search_zi, 
                  search_pinyin, 
                  search_trans,
+                 edit_vocab,
                  review_vocab,
                  write_ju_zi,
                  write_sqlite]
 
-    for i, f in enumerate(functions):
+    for i, f in enumerate(functions, 1):
         print(str(i) + ": " + f.__name__)
-    sel = input("select function number, leave blank to quit: ")
-    if sel == '':
+    sel = ask_for_int("select function index, enter '0' to quit: ")
+    if sel == 0:
         return
-    elif int(sel) > len(functions) - 1:
-        print("please enter a number in range")
+    elif sel > len(functions) - 1:
+        print("please enter a valid index")
+        return
     else:
-        print(functions[int(sel)]())
+        print(functions[sel - 1]())
 
 if __name__ == '__main__':
     main()
