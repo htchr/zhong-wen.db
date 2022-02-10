@@ -27,7 +27,7 @@ def load_vocab(path=''):
         if new_list_i == 0:
             return
         path = csvs + lists[new_list_i - 1]
-    filename = path.split('/')[-1].split('.')[0] #isolate filename without '.csv'
+    filename = path.split('/')[-1].split('.')[0] # isolate filename without '.csv'
     con = sqlite3.connect(db)
     cur = con.cursor()
     vocab = []
@@ -206,7 +206,7 @@ def update_vocab(i=0, zi='', pinyin='', trans='', gram=''):
                 continue
             else:
                 properties[key][0] = new
-    # if new value == '', use old value, else new value
+    # if new value != '', use new value, else old value
     update = []
     for key in properties:
         if properties[key][0] != '':
@@ -293,11 +293,17 @@ def main():
     sel = ask_for_int("select function index, enter '0' to quit: ")
     if sel == 0:
         return
-    elif sel > len(functions) - 1:
+    elif sel > len(functions):
         print("please enter a valid index")
-        return
+        return 
     else:
-        print(functions[sel - 1]())
+        f = functions[sel - 1]()
+        if type(f) == list:
+            for r in f:
+                print(r)
+        else:
+            print(f)
+        return
 
 if __name__ == '__main__':
     main()
