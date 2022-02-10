@@ -5,6 +5,8 @@ import os
 import csv
 import random
 
+db = "/Users/jack/Documents/projects/22-chinese/zhong-wen.db"
+
 def load_vocab(path=''):
     """
     load vocab words from a user selected csv file to sqlite
@@ -26,7 +28,7 @@ def load_vocab(path=''):
             return
         path = csvs + lists[new_list_i - 1]
     filename = path.split('/')[-1].split('.')[0] #isolate filename without '.csv'
-    con = sqlite3.connect("zhong-wen.db")
+    con = sqlite3.connect(db)
     cur = con.cursor()
     vocab = []
     with open(path, newline='') as csvfile:
@@ -53,7 +55,7 @@ def search_zi(user_zi=''):
         user_zi = input("enter the chinese character you would like to search for, leave blank to quit: ")
     if user_zi == '':
         return
-    con = sqlite3.connect("zhong-wen.db")
+    con = sqlite3.connect(db)
     cur = con.cursor()
     with con:
         cur.execute("""SELECT * FROM Vocab WHERE 
@@ -110,7 +112,7 @@ def search_pinyin(user_pinyin=''):
         return
     pinyin_perms = tone_perms(user_pinyin)
     words = []
-    con = sqlite3.connect("zhong-wen.db")
+    con = sqlite3.connect(db)
     cur = con.cursor()
     for p in pinyin_perms:
         with con:
@@ -139,7 +141,7 @@ def search_trans(user_eng=''):
     if user_eng == '':
         return
     user_eng = user_eng.strip()
-    con = sqlite3.connect("zhong-wen.db")
+    con = sqlite3.connect(db)
     cur = con.cursor()
     with con:
         cur.execute("""SELECT * FROM Vocab WHERE
@@ -169,7 +171,7 @@ def ask_for_int(message):
         except:
             print("please enter an integer")
 
-def edit_vocab(i=0, zi='', pinyin='', trans='', gram=''):
+def update_vocab(i=0, zi='', pinyin='', trans='', gram=''):
     """
     edit a row of the Vocab table
     ---
@@ -184,7 +186,7 @@ def edit_vocab(i=0, zi='', pinyin='', trans='', gram=''):
         i = ask_for_int("enter the index of the row to edit, enter '0' to quit: ")
     if i == 0:
         return
-    con = sqlite3.connect("zhong-wen.db")
+    con = sqlite3.connect(db)
     cur = con.cursor()
     with con:
         cur.execute("SELECT * FROM Vocab WHERE ID = ?", (i,))
@@ -240,7 +242,7 @@ def review_vocab(n=0):
     if n == 0:
         return
     correct = 0
-    con = sqlite3.connect("zhong-wen.db")
+    con = sqlite3.connect(db)
     cur = con.cursor()
     with con:
         cur.execute("SELECT * FROM Vocab ORDER BY random() LIMIT ?", (n,))
@@ -265,7 +267,7 @@ def write_sqlite(command=''):
         command = input("enter SQLite command, leave blank to quit: ")
     if command == '':
         return
-    con = sqlite3.connect('zhong-wen.db')
+    con = sqlite3.connect(db)
     cur = con.cursor()
     try:
         with con:
@@ -281,7 +283,7 @@ def main():
                  search_zi, 
                  search_pinyin, 
                  search_trans,
-                 edit_vocab,
+                 update_vocab,
                  review_vocab,
                  write_ju_zi,
                  write_sqlite]
