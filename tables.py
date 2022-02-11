@@ -23,6 +23,7 @@ def sentence_structure_table():
     with con:
         cur.execute("""CREATE TABLE IF NOT EXISTS Structures (
                        ID INTEGER PRIMARY KEY,
+                       Pack TEXT
                        Structure TEXT NOT NULL,
                        Notes TEXT)""")
     con.close()
@@ -37,7 +38,8 @@ def ju_zi_table():
                        ID INTEGER PRIMARY KEY,
                        Structure TEXT,
                        Zi TEXT,
-                       ju_zi TEXT)""")
+                       ju_zi TEXT
+                       Valid INT)""")
     con.close()
 
 vocab_table()

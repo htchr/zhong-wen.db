@@ -44,6 +44,13 @@ def load_vocab(path=''):
                         (filename, word[0], word[1], word[2], ''))
     con.close()
 
+def load_ju(path=''):
+    """
+    load sentence structure csvs
+    ---
+    path: string to the location of the new grammar pack
+    """
+
 def search_zi(user_zi=''):
     """
     search through the sqlite db for words including a chinese character
@@ -76,7 +83,7 @@ def tone_perms(pinyin):
     assumes only one tone is present in the string
     ---
     pinyin: string to generate from
-    returns: list of permutations of all tone combinations
+    returns: list of permutations of all tone combinations / None
     """
     tones = {'a': ('ā', 'á', 'â', 'à'),
              'e': ('ē', 'é', 'ê', 'è'), 
@@ -155,19 +162,22 @@ def search_trans(user_eng=''):
         return
     return words
 
-def ask_for_int(message):
+def ask_for_int(message, max=1000000000):
     """
     support function to ask users for an integer
     to use in place of regular input() method
     ---
     message: string asking the user for an integer
-    returns i: user input integer
+    returns i: user input integer / None
     """
     while True:
         i = input(message)
         try:
             i = int(i)
-            return i
+            if i <= max:
+                return i
+            else:
+                print("please enter and integer less than or equal to " + str(max))
         except:
             print("please enter an integer")
 
@@ -180,7 +190,7 @@ def update_vocab(i=0, zi='', pinyin='', trans='', gram=''):
     pinyin: string of new pinyin
     trans: string of new translation
     gram: string of new grammar notes
-    returns: tuple of the editted row
+    returns: tuple of the editted row / None
     """
     if i == 0:
         i = ask_for_int("enter the index of the row to edit, enter '0' to quit: ")
@@ -196,16 +206,13 @@ def update_vocab(i=0, zi='', pinyin='', trans='', gram=''):
                   'pinyin': [pinyin, row[3]],
                   'trans': [trans, row[4]],
                   'gram': [gram, row[5]]}
+    # if in command line ui: ask for new values
     if __name__ == '__main__':
-        # if in command line ui: ask for new values
         print(row)
         for key in properties:
             print(key + ": " + properties[key][1])
             new = input("change " + key + ", leave blank to keep current value: ")
-            if new == '':
-                continue
-            else:
-                properties[key][0] = new
+            properties[key][0] = new
     # if new value != '', use new value, else old value
     update = []
     for key in properties:
@@ -235,7 +242,7 @@ def review_vocab(n=0):
     user inupts 0 / 1 to progress + keep track of progress
     ---
     n: int of how many words to review
-    returns: ratio of correct:incorrect
+    returns: ratio of correct:incorrect / None
     """
     if n == 0:
         n = ask_for_int("enter the number of vocab you want to review, enter '0' to quit: ")
@@ -255,10 +262,49 @@ def review_vocab(n=0):
         correct += ask_for_int("did you know this word? 0/1: ")
     return correct / n
 
-def write_ju_zi():
+def write_ju_zi(n=0):
     """
     randomly selects 1 sentence structure and 1 word to make a sentence with
     records sentences to sqlite db to review with tutor
+    ---
+    n: int of the number of sentences to write
+    """
+    if n == 0:
+        n = ask_for_int("enter the number of sentences you would like to write, enter '0' to quit: ")
+    if n == 0:
+        return
+    con = sqlite3.connect(db)
+    cur = con.cursor()
+    structures = []
+    words = []
+    sentences = []
+    for j in range(n):
+        with con:
+            cur.execute("SELECT * FROM Structures ORDER BY random() LIMIT 1")
+        structure = cur.fetchone()
+        structures.append(structure)
+        with con:    
+            cur.execute("SELECT * FROM Vocab ORDER BY random() LIMIT 1")
+        word = cur.fetchone()
+        words.append(word)
+        print("using this structure:\n" + structure)
+        print("and this word:\n" + word)
+        sentence = input("write a sentence: ")
+        sentences.append(sentence)
+    for i in range(n):
+        with con:
+            cur.execute("INSERT INTO Ju_Zi VALUES (NULL,?,?,?,NULL)",
+                        (sturctures[i][1], words[i][2], sentences[i]))
+    con.close()
+
+def review_ju(n=0):
+    """
+    review sentences with tutor
+    find sentences with empty 'valid' field
+    choose to keep / update / delete
+    ---
+    n: int of the number of sentences to review
+    returns: float ratio of kept:deleted
     """
 
 def write_sqlite(command=''):
@@ -279,23 +325,21 @@ def write_sqlite(command=''):
 
 def main():
     "command line ui"
-    functions = [load_vocab,
+    functions = (load_vocab,
+                 load_ju,
                  search_zi, 
                  search_pinyin, 
                  search_trans,
                  update_vocab,
                  review_vocab,
                  write_ju_zi,
-                 write_sqlite]
-
+                 review_ju,
+                 write_sqlite)
     for i, f in enumerate(functions, 1):
         print(str(i) + ": " + f.__name__)
-    sel = ask_for_int("select function index, enter '0' to quit: ")
+    sel = ask_for_int("select function index, enter '0' to quit: ", len(functions))
     if sel == 0:
         return
-    elif sel > len(functions):
-        print("please enter a valid index")
-        return 
     else:
         f = functions[sel - 1]()
         if type(f) == list:
