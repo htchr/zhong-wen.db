@@ -8,6 +8,25 @@ import random
 db = "/Users/jack/Documents/projects/22-chinese/zhong-wen.db"
 csvs = "/Users/jack/Documents/projects/22-chinese/csvs/"
 
+def ask_for_int(message, max=1000000000):
+    """
+    support function to ask users for an integer
+    to use in place of regular input() method
+    ---
+    message: string asking the user for an integer
+    returns i: user input integer / None
+    """
+    while True:
+        i = input(message)
+        try:
+            i = int(i)
+            if i <= max:
+                return i
+            else:
+                print("please enter and integer less than or equal to " + str(max))
+        except:
+            print("please enter an integer")
+
 def load_vocab(path=''):
     """
     load vocab words from a user selected csv file to sqlite
@@ -92,12 +111,11 @@ def search_zi(user_zi=''):
         return
     con = sqlite3.connect(db)
     cur = con.cursor()
-    with con:
-        cur.execute("""SELECT * FROM Vocab WHERE 
-                       Zi LIKE (? || '%') 
-                       OR Zi LIKE ('%' || ? || '%') 
-                       OR Zi LIKE ('%' || ?)""", 
-                    (user_zi,user_zi, user_zi))
+    cur.execute("""SELECT * FROM Vocab WHERE 
+                   Zi LIKE (? || '%') 
+                   OR Zi LIKE ('%' || ? || '%') 
+                   OR Zi LIKE ('%' || ?)""", 
+                (user_zi,user_zi, user_zi))
     words = cur.fetchall()
     con.close()
     if len(words) == 0:
@@ -150,12 +168,11 @@ def search_pinyin(user_pinyin=''):
     con = sqlite3.connect(db)
     cur = con.cursor()
     for p in pinyin_perms:
-        with con:
-            cur.execute("""SELECT * FROM Vocab WHERE
-                           PinYin LIKE (? || '%')
-                           OR PinYin LIKE ('%' || ? || '%')
-                           OR PinYin LIKE ('%' || ?)""",
-                        (p, p, p))
+        cur.execute("""SELECT * FROM Vocab WHERE
+                       PinYin LIKE (? || '%')
+                       OR PinYin LIKE ('%' || ? || '%')
+                       OR PinYin LIKE ('%' || ?)""",
+                    (p, p, p))
         rows = cur.fetchall()
         for r in rows:
             words.append(r)
@@ -178,36 +195,16 @@ def search_trans(user_eng=''):
     user_eng = user_eng.strip()
     con = sqlite3.connect(db)
     cur = con.cursor()
-    with con:
-        cur.execute("""SELECT * FROM Vocab WHERE
-                       Trans LIKE (? || '%')
-                       OR Trans LIKE ('%' || ? || '%')
-                       OR Trans LIKE ('%' || ?)""",
-                    (user_eng, user_eng, user_eng))
+    cur.execute("""SELECT * FROM Vocab WHERE
+                   Trans LIKE (? || '%')
+                   OR Trans LIKE ('%' || ? || '%')
+                   OR Trans LIKE ('%' || ?)""",
+                (user_eng, user_eng, user_eng))
     words = cur.fetchall()
     con.close()
     if len(words) == 0:
         return
     return words
-
-def ask_for_int(message, max=1000000000):
-    """
-    support function to ask users for an integer
-    to use in place of regular input() method
-    ---
-    message: string asking the user for an integer
-    returns i: user input integer / None
-    """
-    while True:
-        i = input(message)
-        try:
-            i = int(i)
-            if i <= max:
-                return i
-            else:
-                print("please enter and integer less than or equal to " + str(max))
-        except:
-            print("please enter an integer")
 
 def update_vocab(i=0, zi='', pinyin='', trans='', gram=''):
     """
@@ -226,8 +223,7 @@ def update_vocab(i=0, zi='', pinyin='', trans='', gram=''):
         return
     con = sqlite3.connect(db)
     cur = con.cursor()
-    with con:
-        cur.execute("SELECT * FROM Vocab WHERE ID = ?", (i,))
+    cur.execute("SELECT * FROM Vocab WHERE ID = ?", (i,))
     row = cur.fetchone()
     # map of col name to old and new values
     properties = {'zi': [zi, row[2]], 
@@ -257,8 +253,7 @@ def update_vocab(i=0, zi='', pinyin='', trans='', gram=''):
                        WHERE ID = ?""",
                     (update[0], update[1], update[2], update[3], i))
     # select same row to return confirmed change
-    with con:
-        cur.execute("SELECT * FROM Vocab Where ID = ?", (i, ))
+    cur.execute("SELECT * FROM Vocab Where ID = ?", (i, ))
     row = cur.fetchone()
     con.close()
     return row
@@ -279,8 +274,7 @@ def review_vocab(n=0):
     correct = 0
     con = sqlite3.connect(db)
     cur = con.cursor()
-    with con:
-        cur.execute("SELECT * FROM Vocab ORDER BY random() LIMIT ?", (n,))
+    cur.execute("SELECT * FROM Vocab ORDER BY random() LIMIT ?", (n,))
     words = cur.fetchall()
     con.close()
     for w in words:
@@ -307,12 +301,10 @@ def write_ju_zi(n=0):
     words = []
     sentences = []
     for j in range(n):
-        with con:
-            cur.execute("SELECT * FROM Structures ORDER BY random() LIMIT 1")
+        cur.execute("SELECT * FROM Structures ORDER BY random() LIMIT 1")
         structure = cur.fetchone()
         structures.append(structure)
-        with con:    
-            cur.execute("SELECT * FROM Vocab ORDER BY random() LIMIT 1")
+        cur.execute("SELECT * FROM Vocab ORDER BY random() LIMIT 1")
         word = cur.fetchone()
         words.append(word)
         print("using this structure:\n" + str(structure))
