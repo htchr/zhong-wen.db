@@ -6,6 +6,7 @@ import csv
 import random
 
 db = "/Users/jack/Documents/projects/22-chinese/zhong-wen.db"
+csvs = "/Users/jack/Documents/projects/22-chinese/csvs/"
 
 def load_vocab(path=''):
     """
@@ -15,7 +16,6 @@ def load_vocab(path=''):
     ---
     path: string to the location of the new vocab list
     """
-    csvs = "/Users/jack/Documents/projects/22-chinese/csvs/"
     if path == '':
         lists = []
         for c in os.listdir(csvs):
@@ -50,6 +50,34 @@ def load_ju(path=''):
     ---
     path: string to the location of the new grammar pack
     """
+    if path == '':
+        lists = []
+        for c in os.listdir(csvs):
+            if c.split('.')[-1] == 'csv':
+                lists.append(c)
+        for i, l in enumerate(lists, 1):
+            print(str(i) + ": " + l)
+        new_list_i = ask_for_int("enter the index of the new list, enter '0' to quit: ")
+        if new_list_i == 0:
+            return
+        path = csvs + lists[new_list_i - 1]
+    filename = path.split('/')[-1].split('.')[0] # isolate filename without '.csv'
+    con = sqlite3.connect(db)
+    cur = con.cursor()
+    structures = []
+    with open(path, newline='') as csvfile:
+        c_row = csv.reader(csvfile, delimiter=';')
+        for r in c_row:
+            # confirm the structure is not already present in db
+            cur.execute("SELECT * FROM Structures WHERE Structure = ?", (r[0],))
+            if len(cur.fetchall()) == 0:
+                structures.append(r)
+    with con:
+        for s in structures:
+            print(s)
+            cur.execute("INSERT INTO Structures VALUES (NULL,?,?,?)",
+                        (filename, s[0], s[1]))
+    con.close()
 
 def search_zi(user_zi=''):
     """
@@ -287,14 +315,14 @@ def write_ju_zi(n=0):
             cur.execute("SELECT * FROM Vocab ORDER BY random() LIMIT 1")
         word = cur.fetchone()
         words.append(word)
-        print("using this structure:\n" + structure)
-        print("and this word:\n" + word)
+        print("using this structure:\n" + str(structure))
+        print("and this word:\n" + str(word))
         sentence = input("write a sentence: ")
         sentences.append(sentence)
     for i in range(n):
         with con:
             cur.execute("INSERT INTO Ju_Zi VALUES (NULL,?,?,?,NULL)",
-                        (sturctures[i][1], words[i][2], sentences[i]))
+                        (structures[i][1], words[i][2], sentences[i]))
     con.close()
 
 def review_ju(n=0):
