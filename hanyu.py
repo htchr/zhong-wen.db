@@ -106,8 +106,33 @@ def add_word(zi='', pinyin='', trans='', gram=''):
     pinyin: string of the chinese pronunciation
     trans: string of the english translation
     gram: string of notes on the grammar
-    returns: tuple of the new row in the table
+    returns: tuple of the new row in the table / None
     """
+    if zi == '':
+        zi = input("enter the chinese character: leave blank to quit: ")
+    if zi == '':
+        return
+    if pinyin == '':
+        pinyin = input("enter the pinyin pronunciation, leave blank to quit: ")
+    if pinyin == '':
+        return
+    if trans == '':
+        trans = input("enter the english translation, leave blank to quit: ")
+    if trans == '':
+        return
+    if gram == '':
+        gram = input("enter notes about the grammar, leave blank to quit: ")
+    if gram == '':
+        return
+    con = sqlite3.connect(db)
+    cur = con.cursor()
+    with con:
+        cur.execute("INSERT INTO Vocab VALUES (NULL,?,?,?,?,?)",
+                    ("terminal", zi, pinyin, trans, gram))
+    cur.execute("SELECT * FROM Vocab WHERE Zi = ?", (zi,))
+    added = cur.fetchone()
+    con.close()
+    return added
 
 def add_structure(structure='', notes=''):
     """
@@ -344,7 +369,7 @@ def review_ju(n=0):
     choose to keep / update / delete
     ---
     n: int of the number of sentences to review
-    returns: float ratio of kept:deleted
+    returns: float ratio of kept:deleted / None
     """
     if n == 0:
         n = ask_for_int("enter the number of sentences you would like to review, enter '0' to quit: ")
