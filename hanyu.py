@@ -109,7 +109,7 @@ def add_word(zi='', pinyin='', trans='', gram=''):
     returns: tuple of the new row in the table / None
     """
     if zi == '':
-        zi = input("enter the chinese character: leave blank to quit: ")
+        zi = input("enter the chinese character, leave blank to quit: ")
     if zi == '':
         return
     if pinyin == '':
@@ -140,8 +140,25 @@ def add_structure(structure='', notes=''):
     ---
     structure: string of the grammar template
     ntoes: string of notes on the usage of the structure
-    returns: tuple of the new row in the table
+    returns: tuple of the new row in the table / None
     """
+    if structure == '':
+        structure = input("enter the template grammar structure, leave blank to quit: ")
+    if structure == '':
+        return
+    if notes == '':
+        notes = input("enter notes about the grammar structure, leave blank to quit: ")
+    if notes == '':
+        return
+    con = sqlite3.connect(db)
+    cur = con.cursor()
+    with con:
+        cur.execute("INSERT INTO Structures VALUES (NULL,?,?,?)",
+                    ("terminal", structure, notes))
+    cur.execute("SELECT * FROM Structures WHERE Structure = ?", (structure,))
+    added = cur.fetchone()
+    con.close()
+    return added
 
 def search_zi(user_zi=''):
     """
@@ -326,7 +343,7 @@ def review_vocab(n=0):
         i = random.randrange(2, 5)
         input(w[i])
         print(w)
-        correct += ask_for_int("did you know this word? 0/1: ")
+        correct += ask_for_int("did you know this word? 0/1: ", 1)
     return correct / n
 
 def write_ju_zi(n=0):
