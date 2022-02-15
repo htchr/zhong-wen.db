@@ -98,6 +98,26 @@ def load_ju(path=''):
                         (filename, s[0], s[1]))
     con.close()
 
+def add_word(zi='', pinyin='', trans='', gram=''):
+    """
+    add an individual new word to the Vocab table
+    ---
+    zi: string of the chinese character
+    pinyin: string of the chinese pronunciation
+    trans: string of the english translation
+    gram: string of notes on the grammar
+    returns: tuple of the new row in the table
+    """
+
+def add_structure(structure='', notes=''):
+    """
+    add an individual grammar structure to the Structures table
+    ---
+    structure: string of the grammar template
+    ntoes: string of notes on the usage of the structure
+    returns: tuple of the new row in the table
+    """
+
 def search_zi(user_zi=''):
     """
     search through the sqlite db for words including a chinese character
@@ -326,6 +346,35 @@ def review_ju(n=0):
     n: int of the number of sentences to review
     returns: float ratio of kept:deleted
     """
+    if n == 0:
+        n = ask_for_int("enter the number of sentences you would like to review, enter '0' to quit: ")
+    if n == 0:
+        return
+    con = sqlite3.connect(db)
+    cur = con.cursor()
+    cur.execute("SELECT * FROM Ju_Zi WHERE Valid IS NULL ORDER BY random() LIMIT ?", (n,))
+    sentences = cur.fetchall()
+    kept = 0
+    for j in sentences:
+        print(j)
+        u = ask_for_int("keep (1), edit (2), delete (3), quit (0): ", 3)
+        if u == 0:
+            con.close()
+            return kept / n
+        elif u == 1:
+            with con:
+                cur.execute("UPDATE Ju_Zi SET Valid = 1 WHERE ID = ?", (j[0],))
+            kept += 1
+        elif u == 2:
+            edit = input("enter the full edited sentence: ")
+            with con:
+                cur.execute("UPDATE Ju_Zi SET ju_zi = ?, Valid = 1 WHERE ID = ?", (edit, j[0]))
+            kept += 1
+        elif u == 3:
+            with con:
+                cur.execute("DELETE FROM Ju_Zi WHERE ID = ?", (j[0],))
+    con.close()
+    return kept / n
 
 def write_sqlite(command=''):
     "directly write to the db"
@@ -347,6 +396,8 @@ def main():
     "command line ui"
     functions = (load_vocab,
                  load_ju,
+                 add_word,
+                 add_structure,
                  search_zi, 
                  search_pinyin, 
                  search_trans,
