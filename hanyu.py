@@ -5,7 +5,7 @@ import os
 import csv
 import random
 
-db = "/Users/jack/Documents/projects/22-chinese/zhong-wen.db"
+db = "/Users/jack/Documents/logs/zhong-wen.db"
 csvs = "/Users/jack/Documents/projects/22-chinese/csvs/"
 
 def ask_for_int(message, max=1000000000):
@@ -14,7 +14,7 @@ def ask_for_int(message, max=1000000000):
     to use in place of regular input() method
     ---
     message: string asking the user for an integer
-    returns i: user input integer / None
+    returns i: user input integer
     """
     while True:
         i = input(message)
@@ -431,7 +431,7 @@ def write_sqlite(command=''):
             cur.execute(command)
     except Exception as e:
         con.close()
-        return "could not execute command" + str(e)
+        return "could not execute command\n" + str(e)
     con.close()
 
 def main():
