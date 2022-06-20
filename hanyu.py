@@ -94,8 +94,8 @@ def load_ju(path=''):
     with con:
         for s in structures:
             print(s)
-            cur.execute("INSERT INTO Structures VALUES (NULL,?,?,?)",
-                        (filename, s[0], s[1]))
+            cur.execute("INSERT INTO Structures VALUES (NULL,?,?,?,?)",
+                        (filename, s[0], s[1], s[2]))
     con.close()
 
 def add_word(zi='', pinyin='', trans='', gram=''):
@@ -134,27 +134,30 @@ def add_word(zi='', pinyin='', trans='', gram=''):
     con.close()
     return added
 
-def add_structure(structure='', notes=''):
+def add_structure(structure='', translation='', notes=''):
     """
     add an individual grammar structure to the Structures table
     ---
     structure: string of the grammar template
-    ntoes: string of notes on the usage of the structure
+    translation: literal meaning of the sentence structure
+    notes: string of notes on the usage of the structure
     returns: tuple of the new row in the table / None
     """
     if structure == '':
         structure = input("enter the template grammar structure, leave blank to quit: ")
     if structure == '':
         return
-    if notes == '':
-        notes = input("enter notes about the grammar structure, leave blank to quit: ")
-    if notes == '':
+    if translation == '':
+        translation = input("enter the translation about the grammar structure, leave blank to quit: ")
+    if translation == '':
         return
+    if notes == '':
+        notes = input("enter notes about the grammar structure: ")
     con = sqlite3.connect(db)
     cur = con.cursor()
     with con:
-        cur.execute("INSERT INTO Structures VALUES (NULL,?,?,?)",
-                    ("terminal", structure, notes))
+        cur.execute("INSERT INTO Structures VALUES (NULL,?,?,?,?)",
+                    ("terminal", structure, translation, notes))
     cur.execute("SELECT * FROM Structures WHERE Structure = ?", (structure,))
     added = cur.fetchone()
     con.close()
@@ -362,21 +365,28 @@ def write_ju_zi(n=0):
     structures = []
     words = []
     sentences = []
+    translations = []
     for j in range(n):
+        # select random sentence structure
         cur.execute("SELECT * FROM Structures ORDER BY random() LIMIT 1")
         structure = cur.fetchone()
         structures.append(structure)
+        # select random word
         cur.execute("SELECT * FROM Vocab ORDER BY random() LIMIT 1")
         word = cur.fetchone()
         words.append(word)
+        # print selections and ask for input
         print("using this structure:\n" + str(structure))
         print("and this word:\n" + str(word))
         sentence = input("write a sentence: ")
         sentences.append(sentence)
+        translation = input("write what you think you're saying: ")
+        translations.append(translation)
+    # load user sentences into Ju_Zi table for later review
     for i in range(n):
         with con:
-            cur.execute("INSERT INTO Ju_Zi VALUES (NULL,?,?,?,NULL)",
-                        (structures[i][1], words[i][2], sentences[i]))
+            cur.execute("INSERT INTO Ju_Zi VALUES (NULL,?,?,?,?,NULL)",
+                        (structures[i][1], words[i][2], sentences[i], translations[i]))
     con.close()
 
 def review_ju(n=0):
@@ -410,7 +420,7 @@ def review_ju(n=0):
         elif u == 2:
             edit = input("enter the full edited sentence: ")
             with con:
-                cur.execute("UPDATE Ju_Zi SET ju_zi = ?, Valid = 1 WHERE ID = ?", (edit, j[0]))
+                cur.execute("UPDATE Ju_Zi SET Ju_Zi = ?, Valid = 1 WHERE ID = ?", (edit, j[0]))
             kept += 1
         elif u == 3:
             with con:
