@@ -27,6 +27,7 @@ def sentence_structure_table():
                        ID INTEGER PRIMARY KEY,
                        Pack TEXT,
                        Structure TEXT NOT NULL,
+                       Translation TEXT NOT NULL,
                        Notes TEXT)""")
     con.close()
 
@@ -40,7 +41,8 @@ def ju_zi_table():
                        ID INTEGER PRIMARY KEY,
                        Structure TEXT,
                        Zi TEXT,
-                       ju_zi TEXT,
+                       Ju_Zi TEXT,
+                       Translation TEXT,
                        Valid INT)""")
     con.close()
 
